@@ -1,18 +1,27 @@
+
 from sqlalchemy import create_engine,Column , String , Integer , ForeignKey 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker,relationship
 from sqlalchemy.exc import IntegrityError
 
 
-#create DataBase
 
-engine = create_engine('sqlite:///mydb.db',echo=False)
+
+connection_string = "mysql+pymysql://myuser:1234@localhost:3306/mydb"
+
+
+engine = create_engine(connection_string)
+
+try:
+    with engine.connect() as connection:
+        print("Successfully connected to the MySQL database!")
+except Exception as e:
+    print(f"Error connecting to the database: {e}")
+
+Session = sessionmaker(bind=engine)
+session = Session()
+
 Base= declarative_base()
-Session=sessionmaker(bind=engine)
-session=Session()
-
-
-#models
 
 
 class User(Base):

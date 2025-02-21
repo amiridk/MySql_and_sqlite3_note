@@ -1,40 +1,34 @@
-from sqlalchemy import create_engine,Column , String , Integer , ForeignKey 
+from sqlalchemy import create_engine, Column, String, Integer, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker,relationship
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.exc import IntegrityError
 
 
-#create DataBase
+engine = create_engine('mysql+mysqlconnector://root:your_password@localhost/my_database', echo=False)
+Base = declarative_base()
+Session = sessionmaker(bind=engine)
+session = Session()
 
-engine = create_engine('sqlite:///mydb.db',echo=False)
-Base= declarative_base()
-Session=sessionmaker(bind=engine)
-session=Session()
-
-
-#models
-
-
+# Models
 class User(Base):
-    __tablename__='users'
-    id = Column(Integer,primary_key=True)
-    name = Column(String , nullable=False)
-    email = Column(String , nullable=False , unique=True)
-    tasks = relationship('Task', back_populates='user',cascade='all, delete-orphan')
-    
-class Task(Base):
-    __tablename__='tasks'
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
-    title = Column(String, nullable=False)
-    description = Column(String, nullable=False)
+    name = Column(String(100), nullable=False)  # Specify length for String in MySQL
+    email = Column(String(100), nullable=False, unique=True)
+    tasks = relationship('Task', back_populates='user', cascade='all, delete-orphan')
+
+class Task(Base):
+    __tablename__ = 'tasks'
+    id = Column(Integer, primary_key=True)
+    title = Column(String(100), nullable=False)
+    description = Column(String(255), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship('User', back_populates='tasks')
 
+# Create all tables
 Base.metadata.create_all(engine)
 
-
 # Utils
-
 def get_user_by_email(email):
     return session.query(User).filter_by(email=email).first()
 
@@ -48,9 +42,7 @@ def confirm_action(prompt) -> bool:
         else:
             print("Invalid input. Please enter 'y' or 'n'.")
 
-
-
-# Cruds Querry 
+# CRUD Operations
 def add_user():
     name = input("Enter user name: ")
     email = input("Enter user email: ")
@@ -64,9 +56,8 @@ def add_user():
         print(f"User added {name} successfully.")
     except IntegrityError:
         session.rollback()
-        print(f"Error!")
-        
-        
+        print("Error!")
+
 def add_task():
     email = input("Enter user email: ")
     user = get_user_by_email(email)
@@ -79,28 +70,27 @@ def add_task():
         task = Task(title=title, description=description, user=user)
         session.add(task)
         session.commit()
-        print(f"Task added successfully.{title} - {description}")
+        print(f"Task added successfully. {title} - {description}")
     except IntegrityError:
         session.rollback()
         print("Error!")
-        
 
 def get_users():
     for user in session.query(User).all():
-        print(f'ID:{user.id} , name : {user.name} , email : {user.email}')
+        print(f'ID: {user.id}, Name: {user.name}, Email: {user.email}')
 
 def get_tasks():
     for task in session.query(Task).all():
-        print(f'ID:{task.id}, title : {task.title}, description : {task.description}, user_id : {task.user_id}')
+        print(f'ID: {task.id}, Title: {task.title}, Description: {task.description}, User ID: {task.user_id}')
 
 def get_user_task():
-    user = input("enter email of user :")
-    user = get_user_by_email(user)
+    email = input("Enter email of user: ")
+    user = get_user_by_email(email)
     if not user:
         print("User not found.")
         return
     for task in user.tasks:
-        print(f'ID:{task.id}, title : {task.title}, description : {task.description}, user_id : {task.user_id}')
+        print(f'ID: {task.id}, Title: {task.title}, Description: {task.description}, User ID: {task.user_id}')
 
 def update_user():
     email = input("Enter user email: ")
@@ -114,7 +104,7 @@ def update_user():
         user.name = name
         user.email = email
         session.commit()
-        print(f"User updated successfully.")
+        print("User updated successfully.")
     except IntegrityError:
         session.rollback()
         print("Error!")
@@ -130,7 +120,7 @@ def delete_user():
         session.commit()
         print("User deleted successfully.")
     else:
-        print("Operation cancelled.")   
+        print("Operation cancelled.")
 
 def delete_task():
     task_id = input("Enter task ID: ")
@@ -145,28 +135,30 @@ def delete_task():
     else:
         print("Operation cancelled.")
 
-def main() ->None:
-    actions ={
-        '1':add_user ,
-        '2':add_task ,
-        '3':get_user_task,
-        '4':get_users,
-        '5':get_tasks,
-        '6':update_user,
-        '7':delete_user
+def main():
+    actions = {
+        '1': add_user,
+        '2': add_task,
+        '3': get_user_task,
+        '4': get_users,
+        '5': get_tasks,
+        '6': update_user,
+        '7': delete_user,
+        '8': delete_task
     }
-    
+
     while True:
-        print("\n 1.add_user \n 2.add_task \n 3.get_user_task \n 4.get_users \n 5.get_tasks \n 6.update_user \n 7.delete_user \n 8.delete_task \n 9.exit")
+        print("\n1. Add User\n2. Add Task\n3. Get User Tasks\n4. Get Users\n5. Get Tasks\n6. Update User\n7. Delete User\n8. Delete Task\n9. Exit")
         choice = input("Enter your choice: ")
-        if choice =='9':
+        if choice == '9':
             session.close()
-            print('bye bye')
+            print('Goodbye!')
             break
-        action=actions.get(choice)
+        action = actions.get(choice)
         if action:
             action()
         else:
             print("Invalid choice. Please try again.")
 
-main()
+if __name__ == "__main__":
+    main()
