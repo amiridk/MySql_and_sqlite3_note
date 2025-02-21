@@ -1,3 +1,3 @@
-my note about using Sqlite3 in python with  sqlalchemy ORM ,
+my note about using Sqlite3 and MySql in python with sqlalchemy ORM ,
 sqlite3 is a light-wighted and single-threaded db , not good for large scaled but very efficient for local DB and important in ML and AL
 sqlalchemy ORM is the one of best ORMs in python(the best in my opinion) and you can work on it with mongodb and sqlite and mariadb and MySql and ......
